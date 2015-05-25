@@ -17,6 +17,13 @@ embedit.unsupported = function(url) {
 
 embedit.convertors = [
     {
+        name: "imgurAlbums",
+        detect: /imgur\.com\/a\/.*/,
+        convert: function (url) {
+            embedit.unsupported(url);
+        }
+    },
+    {
         name: "imgurGifv",
         detect: /imgur\.com.*(gifv|mp4|webm)/,
         convert: function (url) {

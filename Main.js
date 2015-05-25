@@ -10,6 +10,8 @@ rt.main = function () {
         animate: true,
         cellW: 200,
         cellH: 200,
+        fixSize: 0,
+        draggable: true,
         onResize: function () {
             wall.fitWidth();
         }
