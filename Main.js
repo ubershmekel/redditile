@@ -6,7 +6,6 @@ rt.placeHolderClones = [];
 rt.placeHolder = $("<img class='placeHolder' src='loading.png' />");
 
 var $w = $(window);
-rt.viewingThreshold = 20;
 
 rt.resize = function () {
     $(window).trigger("resize");
@@ -22,35 +21,47 @@ rt.inViewFilter = function (e) {
         et = $e.offset().top,
         eb = et + $e.height();
 
-    return eb >= wt - rt.viewingThreshold && et <= wb + rt.viewingThreshold;
+    // --- wt
+    // --- wb
+    // --- et
+    // --- eb
+
+    return (wt <= eb && eb <= wb) || (wt <= et && et <= wb) || (et <= wt && wb <= eb);
 };
+
+rt.fixElementVisibility = function(item, real, placeHolder) {
+    if (rt.inViewFilter(item)) {
+        //console.log("vis");
+        $(item).replaceWith(real);
+        if (real.play)
+            real.play();
+        //rt.elements[i].show();
+        //rt.placeHolderClones[i].hide();
+    } else {
+        //console.log("invis")
+        if (placeHolder != item) {
+            var $item = $(item);
+            var h = $item.height();
+            var w = $item.width();
+            var $pc = $(placeHolder);
+            if (h > 0 && w > 0) {
+                // I don't know why but the reported width was 0.5 too big on my system
+                // and it caused elements to shift around when I was scrolling with the
+                // debug console open.
+                $pc.width(w - 0.5);
+                $pc.height(h - 0.5);
+            }
+            $item.replaceWith(placeHolder);
+        }
+        //rt.elements[i].hide();
+        //rt.placeHolderClones[i].show();
+    }
+}
 
 rt.checkVisibility = function () {
     var items = rt.container.children();
     for (var i = 0; i < items.length; i++) {
-        if (rt.inViewFilter(items[i])) {
-            //console.log("vis");
-            $(items[i]).replaceWith(rt.elements[i]);
-            if (rt.elements[i].play)
-                rt.elements[i].play();
-            //rt.elements[i].show();
-            //rt.placeHolderClones[i].hide();
-        } else {
-            //console.log("invis")
-            if (rt.placeHolderClones[i] != items[i]) {
-                var $item = $(items[i]);
-                var h = $item.height();
-                var w = $item.width();
-                var $pc = $(rt.placeHolderClones[i]);
-                if (h > 0 && w > 0) {
-                    $pc.width(w);
-                    $pc.height(h);
-                }
-                $item.replaceWith(rt.placeHolderClones[i]);
-            }
-            //rt.elements[i].hide();
-            //rt.placeHolderClones[i].show();
-        }
+        rt.fixElementVisibility(items[i], rt.elements[i], rt.placeHolderClones[i])
     }
 }
 
@@ -101,6 +112,7 @@ rt.main = function () {
 
         //rt.container.append(elem);
         //rt.resize();
+        rt.fixElementVisibility(pcClone, elem[0], pcClone);
     }
 
 
@@ -115,7 +127,8 @@ rt.main = function () {
             var commentsUrl = rv.redditBaseUrl + item.data.permalink;
             embedit.embed(imgUrl, embedFunc);
         };
-        rt.resize();
+
+        //setTimeout(function () { rt.checkVisibility(); }, 100);
         //$(window).trigger("resize");
     });
 
