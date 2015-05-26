@@ -1,0 +1,19 @@
+#container {
+    margin: auto;
+}
+
+.item {
+    background: #ddd;
+    max-width: 50%;
+}
+
+#header {
+    height: 2em;
+    background-color: #eee;
+    font-size: 1.5em;
+    padding: 8px;
+}
+
+.placeHolder {
+    width: 50%;
+}
