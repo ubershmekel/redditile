@@ -17,6 +17,13 @@ embedit.unsupported = function(url) {
 
 embedit.convertors = [
     {
+        name: "youtube",
+        detect: /(youtube\.com|youtu\.be)\/.*/,
+        convert: function (url) {
+            embedit.unsupported(url);
+        }
+    },
+    {
         name: "imgurAlbums",
         detect: /imgur\.com\/a\/.*/,
         convert: function (url) {
@@ -68,8 +75,22 @@ embedit.convertors = [
 
                 }
             })
+        },
+    },
+    {
+        name: "imageExtension",
+        detect: /\.(png|jpg|jpeg|gif|bmp)$/,
+        convert: function (url, embedFunc) {
+            var newElem = $('<img />', {
+                id: '',
+                src: url,
+                alt: '',
+                class: "item"
+            });
+            embedFunc(newElem);
         }
-    }
+    },
+
 ]
 
 embedit.embed = function (url, embedFunc) {
@@ -79,7 +100,7 @@ embedit.embed = function (url, embedFunc) {
     for (var key in embedit.convertors) {
         var convertor = embedit.convertors[key];
         if (url.match(convertor.detect)) {
-            console.log("Matched: " + url + "\n to - " + convertor.name);
+            //console.log("Matched: " + url + "\n to - " + convertor.name);
             newElem = convertor.convert(url, embedFunc);
             //console.log(newElem);
             if (newElem)
@@ -88,12 +109,4 @@ embedit.embed = function (url, embedFunc) {
         }
 
     }
-
-    var newElem = $('<img />', {
-        id: '',
-        src: url,
-        alt: '',
-        class: "item"
-    });
-    embedFunc(newElem);
 }

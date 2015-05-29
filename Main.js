@@ -6,6 +6,7 @@ rt.placeHolderClones = [];
 rt.placeHolder = $("<img class='placeHolder' src='loading.png' />");
 
 var $w = $(window);
+var th = 20;
 
 rt.resize = function () {
     $(window).trigger("resize");
@@ -21,12 +22,7 @@ rt.inViewFilter = function (e) {
         et = $e.offset().top,
         eb = et + $e.height();
 
-    // --- wt
-    // --- wb
-    // --- et
-    // --- eb
-
-    return (wt <= eb && eb <= wb) || (wt <= et && et <= wb) || (et <= wt && wb <= eb);
+    return eb >= wt - th && et <= wb + th;
 };
 
 rt.fixElementVisibility = function(item, real, placeHolder) {
