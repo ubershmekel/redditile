@@ -1,14 +1,22 @@
 embedit = {};
 
-embedit.video = function (url) {
-    if (!url) {
-        conosle.error("Bogus url to embed as video: '" + url + "'");
-        return;
-    }
+embedit.video = function (urls) {
     var video = $('<video autoplay loop />');
-    video.attr("src", url);
+    //video.attr("src", urls[0]);
+    var atLeastOneGood = false;
+    for (var i = 0; i < urls.length; i++) {
+        if (!urls[i]) {
+            conosle.error("Bogus url to embed as video: '" + url + "'");
+            continue;
+        }
+        atLeastOneGood = true;
+        var source = $('<source src="' + urls[i] + '"/>');
+        video.append(source);
+    }
     video.attr("class", "item");
-    return video;
+
+    if(atLeastOneGood)
+        return video;
 }
 
 embedit.unsupported = function(url) {
@@ -34,8 +42,9 @@ embedit.convertors = [
         name: "imgurGifv",
         detect: /imgur\.com.*(gifv|mp4|webm)/,
         convert: function (url) {
-            var newUrl = url.replace(/\.gifv/i, '.webm');
-            return embedit.video(newUrl);
+            var mp4Url = url.replace(/\.gifv/i, '.webm');
+            var webmUrl = url.replace(/\.gifv/i, '.mp4');
+            return embedit.video([mp4Url, webmUrl]);
         }
     },
     {
@@ -71,7 +80,7 @@ embedit.convertors = [
                 url: 'https://gfycat.com/cajax/get/' + name,
                 dataType: "jsonp",
                 success: function(data) {
-                    embedFunc(embedit.video(data.gfyItem.webmUrl));
+                    embedFunc(embedit.video([data.gfyItem.webmUrl, data.gfyItem.mp4Url]));
 
                 }
             })
