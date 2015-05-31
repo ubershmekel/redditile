@@ -1,22 +1,35 @@
 embedit = {};
 
-embedit.video = function (urls) {
+embedit.video = function (webmUrl, mp4Url) {
+    // imgur is annoying and when you use the <source> tags
+    // it tries to redirect you to the gifv page instead of serving
+    // video. We can only circumvent that by putting the src 
+    // on the <video> tag :/
+    
     var video = $('<video autoplay loop />');
     //video.attr("src", urls[0]);
-    var atLeastOneGood = false;
-    for (var i = 0; i < urls.length; i++) {
-        if (!urls[i]) {
-            conosle.error("Bogus url to embed as video: '" + url + "'");
-            continue;
-        }
-        atLeastOneGood = true;
-        var source = $('<source src="' + urls[i] + '"/>');
-        video.append(source);
-    }
     video.attr("class", "item");
+    
+    var url;
+    if(!webmUrl && !mp4Url) {
+        console.error("Empty video urls given");
+        return;
+    }
+    
+    if(mp4Url)
+        url = mp4Url
+    else
+        url = webmUrl
+    
+    if (Modernizr.video.webm && webmUrl) {
+        // Thank you http://diveintohtml5.info/detect.html
+        // try WebM
+        url = webmUrl;
+    }
 
-    if(atLeastOneGood)
-        return video;
+    url = url.replace("http://", "https://");
+    video.attr("src", url);
+    return video;
 }
 
 embedit.unsupported = function(url) {
@@ -25,44 +38,40 @@ embedit.unsupported = function(url) {
 
 embedit.convertors = [
     {
-        name: "youtube",
-        detect: /(youtube\.com|youtu\.be)\/.*/,
-        convert: function (url) {
-            embedit.unsupported(url);
-        }
-    },
-    {
         name: "imgurAlbums",
         detect: /imgur\.com\/a\/.*/,
         convert: function (url) {
-            embedit.unsupported(url);
+            //embedit.unsupported(url);
         }
     },
     {
         name: "imgurGifv",
         detect: /imgur\.com.*(gifv|mp4|webm)/,
-        convert: function (url) {
-            var mp4Url = url.replace(/\.gifv/i, '.webm');
-            var webmUrl = url.replace(/\.gifv/i, '.mp4');
-            return embedit.video([mp4Url, webmUrl]);
+        convert: function (url, embedFunc) {
+            var webmUrl = url.replace(/\.gifv/i, '.webm');
+            var mp4Url = url.replace(/\.gifv/i, '.mp4');
+            embedFunc(embedit.video(webmUrl, mp4Url));
+            return true;
         }
     },
     {
         name: "imgurNoExtension",
         detect: /imgur\.com[^\.]+/,
-        convert: function (url) {
+        convert: function (url, embedFunc) {
             var newUrl = url + '.jpg';
             var image = $('<img />');
             image.attr("src", newUrl);
             image.attr("class", "item");
-            return image;
+            embedFunc(image);
+            return true;
         }
     },
     {
         name: "redditPost",
         detect: /reddit\.com\/r\/.*/,
         convert: function (url) {
-            embedit.unsupported(url);
+            //embedit.unsupported(url);
+            return false;
         }
     },
     {
@@ -74,16 +83,16 @@ embedit.convertors = [
             if(match && match.length > 1)
                 var name = match[1];
             else
-                return null;
+                return false;
             
             $.ajax({
                 url: 'https://gfycat.com/cajax/get/' + name,
                 dataType: "jsonp",
                 success: function(data) {
-                    embedFunc(embedit.video([data.gfyItem.webmUrl, data.gfyItem.mp4Url]));
-
+                    embedFunc(embedit.video(data.gfyItem.webmUrl, data.gfyItem.mp4Url));
                 }
             })
+            return true;
         },
     },
     {
@@ -97,6 +106,7 @@ embedit.convertors = [
                 class: "item"
             });
             embedFunc(newElem);
+            return true;
         }
     },
 
@@ -110,12 +120,12 @@ embedit.embed = function (url, embedFunc) {
         var convertor = embedit.convertors[key];
         if (url.match(convertor.detect)) {
             //console.log("Matched: " + url + "\n to - " + convertor.name);
-            newElem = convertor.convert(url, embedFunc);
+            var handled = convertor.convert(url, embedFunc);
             //console.log(newElem);
-            if (newElem)
-                embedFunc(newElem);
-            return;
+            if (handled)
+                return true;
         }
-
     }
+    embedit.unsupported(url);
+    embedFunc(null);
 }

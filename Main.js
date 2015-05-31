@@ -2,8 +2,8 @@ rt = {};
 
 
 rt.elements = []
-rt.placeHolderClones = [];
-rt.placeHolder = $("<img class='placeHolder' src='loading.png' />");
+rt.placeHolderClones = {};
+rt.placeHolder = $("<img class='placeHolder item' src='loading.png' />");
 
 var $w = $(window);
 var th = 20;
@@ -25,18 +25,32 @@ rt.inViewFilter = function (e) {
     return eb >= wt - th && et <= wb + th;
 };
 
-rt.fixElementVisibility = function(item, real, placeHolder) {
-    if (rt.inViewFilter(item)) {
+rt.fixElementVisibility = function (item) {
+    var $item = $(item);
+    var isPlaceHolder = $item.hasClass('placeHolder');
+    var isInView = rt.inViewFilter(item);
+    var url = $item.attr('data-url');
+    var emb = function (elem) {
+        if (!elem)
+            $item.remove();
+        $(elem).attr('data-url', url);
+        $item.replaceWith(elem);
+    }
+    if (isPlaceHolder && isInView) {
+        embedit.embed(url, emb);
+        //$item.remove();
         //console.log("vis");
-        $(item).replaceWith(real);
-        if (real.play)
-            real.play();
+        //$(item).replaceWith(real);
+
+        //if (real.play)
+            // video elements don't autoplay when put back into the DOM
+        //    real.play();
+
         //rt.elements[i].show();
         //rt.placeHolderClones[i].hide();
     } else {
-        //console.log("invis")
-        if (placeHolder != item) {
-            var $item = $(item);
+        if (!isPlaceHolder && !isInView) {
+            var placeHolder = rt.placeHolderClones[url];
             var h = $item.height();
             var w = $item.width();
             var $pc = $(placeHolder);
@@ -54,8 +68,20 @@ rt.fixElementVisibility = function(item, real, placeHolder) {
     }
 }
 
+rt.embedFunc = function (elem) {
+    //rt.container.append(elem);
+    elem.error(function () {
+        // e.g. if we put something that's not an image in an <img> tag
+        console.log("Failed to load elem: ");
+        console.warn(elem);
+        elem.remove();
+    });
+
+    //rt.fixElementVisibility(pcClone, elem[0], pcClone);
+}
+
 rt.checkVisibility = function () {
-    var items = rt.container.children();
+    var items = $('.item');
     for (var i = 0; i < items.length; i++) {
         rt.fixElementVisibility(items[i], rt.elements[i], rt.placeHolderClones[i])
     }
@@ -84,46 +110,34 @@ rt.main = function () {
     // for scroll bar appear;
     //rt.resize();
 
-    var embedFunc = function (elem) {
-        //rt.container.append(elem);
-        elem.error(function () {
-            console.log("Failed to load elem: ");
-            console.warn(elem);
-            //elem.hide();
-            elem.remove();
-            //rt.resize();
-        });
-        //elem.appendTo($(rt.containerSelector));
-        //$(rt.containerSelector).append(elem);
-
-
-        //rt.container.append(elem);
+    rv.handleUrl = function (url) {
         // `[0]` to remove the jquery-ness for later comparison to the element
-        rt.elements.push(elem[0]);
-        //elem.hide();
+        //rt.elements.push(elem[0]);
+
+        // `[0]` to remove the jquery-ness for later comparison to the element
         var pcClone = rt.placeHolder.clone();
-        // `[0]` to remove the jquery-ness for later comparison to the element
-        rt.placeHolderClones.push(pcClone[0]);
-        rt.container.append(pcClone);
+        pcClone.attr('data-url', url);
+        rt.placeHolderClones[url] = pcClone[0];
 
-        //rt.container.append(elem);
-        //rt.resize();
-        rt.fixElementVisibility(pcClone, elem[0], pcClone);
+        //rt.container.append(pcClone[0]);
+        var col = Object.keys(rt.placeHolderClones).length % 2;
+        $('#col' + col).append(pcClone[0]);
+
+        //embedit.embed(imgUrl, embedFunc);
     }
-
 
     rv.getItems(function (data) {
         console.log(data); console.log(rv.subredditName);
         var articles = data.data.children;
         for (var i = 0; i < articles.length; i++) {
             var item = articles[i];
-            var imgUrl = item.data.url;
+            var url = item.data.url;
             var title = item.data.title;
             var over18 = item.data.over_18;
             var commentsUrl = rv.redditBaseUrl + item.data.permalink;
-            embedit.embed(imgUrl, embedFunc);
+            rv.handleUrl(url);
         };
-
+        rt.checkVisibility();
         //setTimeout(function () { rt.checkVisibility(); }, 100);
         //$(window).trigger("resize");
     });
