@@ -1,9 +1,13 @@
 rt = {};
 
-
-rt.elements = []
+rt.columns = 2;
+rt.articles = []
+rt.setupIndex = 0;
 rt.placeHolderClones = {};
 rt.placeHolder = $("<img class='placeHolder item' src='loading.png' />");
+rt.dataUrl = 'data-url';
+rt.isPendingAjax = 'data-isPendingAjax';
+rt.activeAjax = false;
 
 var $w = $(window);
 var th = 20;
@@ -25,19 +29,54 @@ rt.inViewFilter = function (e) {
     return eb >= wt - th && et <= wb + th;
 };
 
+rt.fixPlaceHolder = function ($item, url) {
+    if (url == null) {
+        var nextUrl = rt.articles[rt.setupIndex];
+        if (nextUrl === undefined && !rt.activeAjax) {
+            rv.next();
+            return;
+        }
+
+        $item.attr(rt.dataUrl, nextUrl);
+        url = nextUrl;
+        rt.setupIndex++;
+
+        rt.verifyPlaceHolders();
+    }
+
+    $item.attr(rt.isPendingAjax, "true");
+    embedit.embed(url, function (elem) {
+        if (!elem) {
+            $item.attr(rt.dataUrl, '');
+            // TODO: try next url
+            return;
+        }
+        $(elem).attr(rt.dataUrl, url);
+        rt.placeHolderClones[url] = $item[0];
+        $item.replaceWith(elem);
+    });
+}
+
 rt.fixElementVisibility = function (item) {
     var $item = $(item);
     var isPlaceHolder = $item.hasClass('placeHolder');
     var isInView = rt.inViewFilter(item);
-    var url = $item.attr('data-url');
+    var url = $item.attr(rt.dataUrl);
+    var isPendingAjax = $item.attr(rt.isPendingAjax);
     var emb = function (elem) {
-        if (!elem)
+        $item.removeAttr(rt.isPendingAjax);
+        if (!elem) {
+            console.log("removing " + url);
             $item.remove();
-        $(elem).attr('data-url', url);
+        }
+        $(elem).attr(rt.dataUrl, url);
         $item.replaceWith(elem);
     }
-    if (isPlaceHolder && isInView) {
+    if (isPlaceHolder && isInView && !isPendingAjax) {
+        $item.attr(rt.isPendingAjax, "true");
         embedit.embed(url, emb);
+
+        //rt.fixPlaceHolder($item, url);
         //$item.remove();
         //console.log("vis");
         //$(item).replaceWith(real);
@@ -49,7 +88,8 @@ rt.fixElementVisibility = function (item) {
         //rt.elements[i].show();
         //rt.placeHolderClones[i].hide();
     } else {
-        if (!isPlaceHolder && !isInView) {
+        if (!isPlaceHolder && !isInView && !isPendingAjax) {
+            $item.attr(rt.isPendingAjax, "true");
             var placeHolder = rt.placeHolderClones[url];
             var h = $item.height();
             var w = $item.width();
@@ -62,6 +102,7 @@ rt.fixElementVisibility = function (item) {
                 $pc.height(h - 0.5);
             }
             $item.replaceWith(placeHolder);
+            $item.removeAttr(rt.isPendingAjax);
         }
         //rt.elements[i].hide();
         //rt.placeHolderClones[i].show();
@@ -83,8 +124,28 @@ rt.embedFunc = function (elem) {
 rt.checkVisibility = function () {
     var items = $('.item');
     for (var i = 0; i < items.length; i++) {
-        rt.fixElementVisibility(items[i], rt.elements[i], rt.placeHolderClones[i])
+        rt.fixElementVisibility(items[i])
     }
+}
+
+rv.verifyPlaceHolders = function() {
+    for (var i = 0; i < rt.columns; i++) {
+        var colId = rt.columnId(i);
+        var pchs = $(colId + ' .placeHolder');
+        var last = pchs[pchs.length - 1];
+        if (last === undefined) {
+            var pcClone = rt.placeHolder.clone();
+            $(colId).append(pcClone[0]);
+            continue
+        }
+        //rt.placeHolderClones[url] = pcClone[0];
+        //var col = Object.keys(rt.placeHolderClones).length % 2;
+        //$(rt.columnId(col)).append(pcClone[0]);
+    }
+}
+
+rt.columnId = function (columnIndex) {
+    return '#col' + columnIndex;
 }
 
 rt.main = function () {
@@ -93,22 +154,7 @@ rt.main = function () {
 
     $w.on("scroll.unveil resize.unveil lookup.unveil", rt.checkVisibility);
 
-    //var wall = new freewall(rt.containerSelector);
-    //wall.reset({
-    //    selector: '.item',
-    //    animate: true,
-    //    cellW: 'auto',
-    //    cellH: 'auto',
-    //    fixSize: 0,
-    //    draggable: true,
-    //    onResize: function () {
-    //        wall.fitWidth();
-    //    }
-    //});
-    //wall.fitWidth();
 
-    // for scroll bar appear;
-    //rt.resize();
 
     rv.handleUrl = function (url) {
         // `[0]` to remove the jquery-ness for later comparison to the element
@@ -116,12 +162,12 @@ rt.main = function () {
 
         // `[0]` to remove the jquery-ness for later comparison to the element
         var pcClone = rt.placeHolder.clone();
-        pcClone.attr('data-url', url);
+        pcClone.attr(rt.dataUrl, url);
         rt.placeHolderClones[url] = pcClone[0];
 
         //rt.container.append(pcClone[0]);
         var col = Object.keys(rt.placeHolderClones).length % 2;
-        $('#col' + col).append(pcClone[0]);
+        $(rt.columnId(col)).append(pcClone[0]);
 
         //embedit.embed(imgUrl, embedFunc);
     }
@@ -129,6 +175,8 @@ rt.main = function () {
     rv.getItems(function (data) {
         console.log(data); console.log(rv.subredditName);
         var articles = data.data.children;
+        //$.merge(rt.articles, articles);
+
         for (var i = 0; i < articles.length; i++) {
             var item = articles[i];
             var url = item.data.url;
@@ -137,14 +185,11 @@ rt.main = function () {
             var commentsUrl = rv.redditBaseUrl + item.data.permalink;
             rv.handleUrl(url);
         };
+
         rt.checkVisibility();
         //setTimeout(function () { rt.checkVisibility(); }, 100);
         //$(window).trigger("resize");
     });
-
-    //embedit.embed(rt.containerSelector, "http://i.imgur.com/A61SaA1.gifv");
-    //embedit.embed(rt.containerSelector, "http://i.imgur.com/zvATqgs.mp4");
-    
 }
 
 $(function () {
