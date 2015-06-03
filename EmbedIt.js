@@ -40,8 +40,10 @@ embedit.convertors = [
     {
         name: "imgurAlbums",
         detect: /imgur\.com\/a\/.*/,
-        convert: function (url) {
-            //embedit.unsupported(url);
+        convert: function (url, embedFunc) {
+            embedit.unsupported(url);
+            embedFunc(null);
+            return true;
         }
     },
     {
