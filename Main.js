@@ -190,6 +190,13 @@ rt.main = function () {
         //setTimeout(function () { rt.checkVisibility(); }, 100);
         //$(window).trigger("resize");
     });
+
+    $("#autoScroll").click(function () {
+        $('body').animate({scrollTop: 8000}, {
+            easing: "linear",
+            duration: 180000
+        });
+    });
 }
 
 $(function () {
