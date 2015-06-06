@@ -33,3 +33,10 @@
 .topButton {
     float: right;
 }
+
+#footer {
+    clear: both;
+    background-color: #ccf;
+    padding: 2em;
+}
+

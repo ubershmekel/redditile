@@ -1,7 +1,7 @@
 rt = {};
 
 rt.columns = 2;
-rt.articles = []
+rt.articles = [];
 rt.setupIndex = 0;
 rt.placeHolderClones = {};
 rt.placeHolder = $("<img class='placeHolder item' src='loading.png' />");
@@ -16,7 +16,7 @@ rt.resize = function () {
     $(window).trigger("resize");
 }
 
-rt.inViewFilter = function (e) {
+rt.isVisible = function (e) {
     // https://github.com/luis-almeida/unveil
     var $e = $(e);
     if ($e.is(":hidden")) return;
@@ -60,19 +60,20 @@ rt.fixPlaceHolder = function ($item, url) {
 rt.fixElementVisibility = function (item) {
     var $item = $(item);
     var isPlaceHolder = $item.hasClass('placeHolder');
-    var isInView = rt.inViewFilter(item);
+    var isInView = rt.isVisible(item);
     var url = $item.attr(rt.dataUrl);
     var isPendingAjax = $item.attr(rt.isPendingAjax);
-    var emb = function (elem) {
-        $item.removeAttr(rt.isPendingAjax);
-        if (!elem) {
-            console.log("removing " + url);
-            $item.remove();
-        }
-        $(elem).attr(rt.dataUrl, url);
-        $item.replaceWith(elem);
-    }
     if (isPlaceHolder && isInView && !isPendingAjax) {
+        // show the url
+        var emb = function (elem) {
+            $item.removeAttr(rt.isPendingAjax);
+            if (!elem) {
+                console.log("removing " + url);
+                $item.remove();
+            }
+            $(elem).attr(rt.dataUrl, url);
+            $item.replaceWith(elem);
+        }
         $item.attr(rt.isPendingAjax, "true");
         embedit.embed(url, emb);
 
@@ -89,13 +90,14 @@ rt.fixElementVisibility = function (item) {
         //rt.placeHolderClones[i].hide();
     } else {
         if (!isPlaceHolder && !isInView && !isPendingAjax) {
+            // replace it with a placeholder
             $item.attr(rt.isPendingAjax, "true");
             var placeHolder = rt.placeHolderClones[url];
             var h = $item.height();
             var w = $item.width();
             var $pc = $(placeHolder);
             if (h > 0 && w > 0) {
-                // I don't know why but the reported width was 0.5 too big on my system
+                // I don't know why but the reported width was 0.5 pixels too big on my system
                 // and it caused elements to shift around when I was scrolling with the
                 // debug console open.
                 $pc.width(w - 0.5);
@@ -121,11 +123,54 @@ rt.embedFunc = function (elem) {
     //rt.fixElementVisibility(pcClone, elem[0], pcClone);
 }
 
+rt.getBottom = function(el) {
+    var $el = $(el);
+    return $el.offset().top + $el.height();
+}
+
+rt.balanceColumnHeight = function () {
+    var thingsMoving = true;
+    while (thingsMoving) {
+        thingsMoving = false;
+        var bottoms = $('.item:last-child');
+        if (bottoms.length < 2)
+            // 1 or 0, there's nothing to balance
+            return;
+
+        // find shortest column
+        var shortestColumnIndex = 0;
+        var shortestColumnBottom = rt.getBottom(bottoms[0]);
+        for (var i = 1; i < bottoms.length; i++) {
+            var bottom = rt.getBottom(bottoms[i]);
+            if (shortestColumnBottom > bottom) {
+                // E.g.
+                // 0 is the top of the document
+                // 100 is lower down
+                shortestColumnBottom = bottom;
+                shortestColumnIndex = i;
+            }
+        }
+
+        // Shorten too long columns
+        for (var i = 0; i < bottoms.length; i++) {
+            var top = $(bottoms[i]).offset().top;
+            if (top > shortestColumnBottom) {
+                // move to that shortest column
+                $(rt.columnId(shortestColumnIndex)).append(bottoms[i]);
+                thingsMoving = true;
+                break;
+            }
+        }
+    }
+}
+
 rt.checkVisibility = function () {
     var items = $('.item');
     for (var i = 0; i < items.length; i++) {
         rt.fixElementVisibility(items[i])
     }
+
+    rt.balanceColumnHeight();
 }
 
 rv.verifyPlaceHolders = function() {
@@ -157,6 +202,11 @@ rt.main = function () {
 
 
     rv.handleUrl = function (url) {
+        // I thought of placing only 1 placeholder in each column
+        // and upon revealing deciding which url it actually got.
+        // But that turned out lame because you wouldn't get good results when you
+        // hit the "end" button.
+
         // `[0]` to remove the jquery-ness for later comparison to the element
         //rt.elements.push(elem[0]);
 
