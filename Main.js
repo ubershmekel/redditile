@@ -29,33 +29,6 @@ rt.isVisible = function (e) {
     return eb >= wt - th && et <= wb + th;
 };
 
-rt.fixPlaceHolder = function ($item, url) {
-    if (url == null) {
-        var nextUrl = rt.articles[rt.setupIndex];
-        if (nextUrl === undefined && !rt.activeAjax) {
-            rv.next();
-            return;
-        }
-
-        $item.attr(rt.dataUrl, nextUrl);
-        url = nextUrl;
-        rt.setupIndex++;
-
-        rt.verifyPlaceHolders();
-    }
-
-    $item.attr(rt.isPendingAjax, "true");
-    embedit.embed(url, function (elem) {
-        if (!elem) {
-            $item.attr(rt.dataUrl, '');
-            // TODO: try next url
-            return;
-        }
-        $(elem).attr(rt.dataUrl, url);
-        rt.placeHolderClones[url] = $item[0];
-        $item.replaceWith(elem);
-    });
-}
 
 rt.fixElementVisibility = function (item) {
     var $item = $(item);
@@ -70,24 +43,22 @@ rt.fixElementVisibility = function (item) {
             if (!elem) {
                 console.log("removing " + url);
                 $item.remove();
+                return;
             }
+            elem.error(function () {
+                // e.g. if we put something that's not an image in an <img> tag
+                console.log("Failed to load elem: ");
+                console.warn(elem);
+                elem.remove();
+            });
+
             $(elem).attr(rt.dataUrl, url);
             $item.replaceWith(elem);
         }
         $item.attr(rt.isPendingAjax, "true");
         embedit.embed(url, emb);
 
-        //rt.fixPlaceHolder($item, url);
-        //$item.remove();
-        //console.log("vis");
-        //$(item).replaceWith(real);
 
-        //if (real.play)
-            // video elements don't autoplay when put back into the DOM
-        //    real.play();
-
-        //rt.elements[i].show();
-        //rt.placeHolderClones[i].hide();
     } else {
         if (!isPlaceHolder && !isInView && !isPendingAjax) {
             // replace it with a placeholder
@@ -106,21 +77,7 @@ rt.fixElementVisibility = function (item) {
             $item.replaceWith(placeHolder);
             $item.removeAttr(rt.isPendingAjax);
         }
-        //rt.elements[i].hide();
-        //rt.placeHolderClones[i].show();
     }
-}
-
-rt.embedFunc = function (elem) {
-    //rt.container.append(elem);
-    elem.error(function () {
-        // e.g. if we put something that's not an image in an <img> tag
-        console.log("Failed to load elem: ");
-        console.warn(elem);
-        elem.remove();
-    });
-
-    //rt.fixElementVisibility(pcClone, elem[0], pcClone);
 }
 
 rt.getBottom = function(el) {
@@ -173,24 +130,45 @@ rt.checkVisibility = function () {
     rt.balanceColumnHeight();
 }
 
-rv.verifyPlaceHolders = function() {
-    for (var i = 0; i < rt.columns; i++) {
-        var colId = rt.columnId(i);
-        var pchs = $(colId + ' .placeHolder');
-        var last = pchs[pchs.length - 1];
-        if (last === undefined) {
-            var pcClone = rt.placeHolder.clone();
-            $(colId).append(pcClone[0]);
-            continue
-        }
-        //rt.placeHolderClones[url] = pcClone[0];
-        //var col = Object.keys(rt.placeHolderClones).length % 2;
-        //$(rt.columnId(col)).append(pcClone[0]);
-    }
-}
-
 rt.columnId = function (columnIndex) {
     return '#col' + columnIndex;
+}
+
+rt.handleUrl = function (url) {
+    // I thought of placing only 1 placeholder in each column
+    // and upon revealing deciding which url it actually got.
+    // But that turned out lame because you wouldn't get good results when you
+    // hit the "end" button.
+
+    // `[0]` to remove the jquery-ness for later comparison to the element
+    //rt.elements.push(elem[0]);
+
+    // `[0]` to remove the jquery-ness for later comparison to the element
+    var pcClone = rt.placeHolder.clone();
+    pcClone.attr(rt.dataUrl, url);
+    rt.placeHolderClones[url] = pcClone[0];
+
+    //rt.container.append(pcClone[0]);
+    var col = Object.keys(rt.placeHolderClones).length % 2;
+    $(rt.columnId(col)).append(pcClone[0]);
+
+}
+
+rt.handleRedditData = function (data) {
+    console.log(data); console.log(rv.subredditName);
+    var articles = data.data.children;
+    //$.merge(rt.articles, articles);
+
+    for (var i = 0; i < articles.length; i++) {
+        var item = articles[i];
+        var url = item.data.url;
+        var title = item.data.title;
+        var over18 = item.data.over_18;
+        var commentsUrl = rv.redditBaseUrl + item.data.permalink;
+        rt.handleUrl(url);
+    };
+
+    rt.checkVisibility();
 }
 
 rt.main = function () {
@@ -201,45 +179,9 @@ rt.main = function () {
 
 
 
-    rv.handleUrl = function (url) {
-        // I thought of placing only 1 placeholder in each column
-        // and upon revealing deciding which url it actually got.
-        // But that turned out lame because you wouldn't get good results when you
-        // hit the "end" button.
+    rv.getItems(rt.handleRedditData);
 
-        // `[0]` to remove the jquery-ness for later comparison to the element
-        //rt.elements.push(elem[0]);
-
-        // `[0]` to remove the jquery-ness for later comparison to the element
-        var pcClone = rt.placeHolder.clone();
-        pcClone.attr(rt.dataUrl, url);
-        rt.placeHolderClones[url] = pcClone[0];
-
-        //rt.container.append(pcClone[0]);
-        var col = Object.keys(rt.placeHolderClones).length % 2;
-        $(rt.columnId(col)).append(pcClone[0]);
-
-        //embedit.embed(imgUrl, embedFunc);
-    }
-
-    rv.getItems(function (data) {
-        console.log(data); console.log(rv.subredditName);
-        var articles = data.data.children;
-        //$.merge(rt.articles, articles);
-
-        for (var i = 0; i < articles.length; i++) {
-            var item = articles[i];
-            var url = item.data.url;
-            var title = item.data.title;
-            var over18 = item.data.over_18;
-            var commentsUrl = rv.redditBaseUrl + item.data.permalink;
-            rv.handleUrl(url);
-        };
-
-        rt.checkVisibility();
-        //setTimeout(function () { rt.checkVisibility(); }, 100);
-        //$(window).trigger("resize");
-    });
+    $("#title").html("<a href='" + rv.visitSubredditUrl + "'>" + rv.truncatedSubredditName + "</a> - redditile");
 
     $("#autoScroll").click(function () {
         $('body').animate({scrollTop: 8000}, {

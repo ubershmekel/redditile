@@ -55,7 +55,7 @@ rv.setupUrls = function () {
     }
 
 
-    var visitSubredditUrl = rv.redditBaseUrl + rv.subredditUrl + rv.getVarsQuestionMark;
+    rv.visitSubredditUrl = rv.redditBaseUrl + rv.subredditUrl + rv.getVarsQuestionMark;
 
     // truncate and display subreddit name in the control box
     rv.truncatedSubredditName = rv.subredditName;
