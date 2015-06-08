@@ -177,8 +177,6 @@ rt.main = function () {
 
     $w.on("scroll.unveil resize.unveil lookup.unveil", rt.checkVisibility);
 
-
-
     rv.getItems(rt.handleRedditData);
 
     $("#title").html("<a href='" + rv.visitSubredditUrl + "'>" + rv.truncatedSubredditName + "</a> - redditile");
