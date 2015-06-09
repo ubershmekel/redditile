@@ -6,6 +6,7 @@ rt.setupIndex = 0;
 rt.placeHolderClones = {};
 rt.placeHolder = $("<img class='placeHolder item' src='loading.png' />");
 rt.dataUrl = 'data-url';
+rt.dataComments = 'data-comments';
 rt.isPendingAjax = 'data-isPendingAjax';
 rt.activeAjax = false;
 
@@ -35,6 +36,7 @@ rt.fixElementVisibility = function (item) {
     var isPlaceHolder = $item.hasClass('placeHolder');
     var isInView = rt.isVisible(item);
     var url = $item.attr(rt.dataUrl);
+    var commentsUrl = $item.attr(rt.dataComments);
     var isPendingAjax = $item.attr(rt.isPendingAjax);
     if (isPlaceHolder && isInView && !isPendingAjax) {
         // show the url
@@ -52,8 +54,13 @@ rt.fixElementVisibility = function (item) {
                 elem.remove();
             });
 
-            $(elem).attr(rt.dataUrl, url);
-            $item.replaceWith(elem);
+            var link = $('<a />', {
+                href: commentsUrl,
+                class: "item"
+            });
+            link.append(elem);
+            link.attr(rt.dataUrl, url);
+            $item.replaceWith(link);
         }
         $item.attr(rt.isPendingAjax, "true");
         embedit.embed(url, emb);
@@ -134,18 +141,21 @@ rt.columnId = function (columnIndex) {
     return '#col' + columnIndex;
 }
 
-rt.handleUrl = function (url) {
+rt.handleUrl = function (item) {
     // I thought of placing only 1 placeholder in each column
     // and upon revealing deciding which url it actually got.
     // But that turned out lame because you wouldn't get good results when you
     // hit the "end" button.
 
-    // `[0]` to remove the jquery-ness for later comparison to the element
-    //rt.elements.push(elem[0]);
+    var url = item.data.url;
+    var title = item.data.title;
+    var over18 = item.data.over_18;
+    var commentsUrl = rv.redditBaseUrl + item.data.permalink;
 
     // `[0]` to remove the jquery-ness for later comparison to the element
     var pcClone = rt.placeHolder.clone();
     pcClone.attr(rt.dataUrl, url);
+    pcClone.attr(rt.dataComments, commentsUrl);
     rt.placeHolderClones[url] = pcClone[0];
 
     //rt.container.append(pcClone[0]);
@@ -157,15 +167,11 @@ rt.handleUrl = function (url) {
 rt.handleRedditData = function (data) {
     console.log(data); console.log(rv.subredditName);
     var articles = data.data.children;
-    //$.merge(rt.articles, articles);
+    $.merge(rt.articles, articles);
 
     for (var i = 0; i < articles.length; i++) {
         var item = articles[i];
-        var url = item.data.url;
-        var title = item.data.title;
-        var over18 = item.data.over_18;
-        var commentsUrl = rv.redditBaseUrl + item.data.permalink;
-        rt.handleUrl(url);
+        rt.handleUrl(item);
     };
 
     rt.checkVisibility();

@@ -11,6 +11,12 @@
     display: block; /* as opposed to inline-block which leaves a small vertical gap*/
 }
 
+
+.item * {
+    /* to make images&videos the full width of the containing <a>*/
+    width: 100%;
+}
+
 #header {
     height: 2em;
     background-color: #eee;

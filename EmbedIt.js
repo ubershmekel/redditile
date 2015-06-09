@@ -8,7 +8,6 @@ embedit.video = function (webmUrl, mp4Url) {
     
     var video = $('<video autoplay loop />');
     //video.attr("src", urls[0]);
-    video.attr("class", "item");
     
     var url;
     if(!webmUrl && !mp4Url) {
@@ -63,7 +62,6 @@ embedit.convertors = [
             var newUrl = url + '.jpg';
             var image = $('<img />');
             image.attr("src", newUrl);
-            image.attr("class", "item");
             embedFunc(image);
             return true;
         }
@@ -104,8 +102,7 @@ embedit.convertors = [
             var newElem = $('<img />', {
                 id: '',
                 src: url,
-                alt: '',
-                class: "item"
+                alt: ''
             });
             embedFunc(newElem);
             return true;
