@@ -5,6 +5,16 @@
     height: 10px;
 }
 
+a {
+    text-decoration: none;
+    font-weight: bold;
+    color: #000;
+}
+
+#header  a:hover {
+    opacity: 0.7;
+}
+
 .item {
     background: #ddd;
     width: 100%;
@@ -15,6 +25,7 @@
 .item * {
     /* to make images&videos the full width of the containing <a>*/
     width: 100%;
+    display: block; /* as opposed to inline-block which leaves a small vertical gap*/
 }
 
 #header {
@@ -38,6 +49,7 @@
 
 .topButton {
     float: right;
+    margin: 4px;
 }
 
 #footer {
