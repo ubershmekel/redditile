@@ -70,7 +70,6 @@ rv.setupUrls = function () {
     //$('#subredditUrl').html("<a href='" + visitSubredditUrl + "'>" + rv.truncatedSubredditName + "</a>");
     //document.title = "redditP - " + subredditName;
 
-    rv.jsonUrl = rv.redditBaseUrl + rv.subredditUrl + ".json?jsonp=?" + rv.after + "&" + rv.getVars;
 }
 
 
@@ -90,6 +89,7 @@ rv.getItems = function (usersHandleData) {
     // I still haven't been able to catch jsonp 404 events so the timeout
     // is the current solution sadly.
     rv.next = function () {
+        rv.jsonUrl = rv.redditBaseUrl + rv.subredditUrl + ".json?jsonp=?" + rv.after + "&" + rv.getVars;
         $.ajax({
             url: rv.jsonUrl,
             dataType: 'jsonp',

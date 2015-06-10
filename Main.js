@@ -135,6 +135,11 @@ rt.checkVisibility = function () {
     }
 
     rt.balanceColumnHeight();
+
+    if (!rt.isGettingReddit && rt.isVisible($('#footer'))) {
+        rt.isGettingReddit = true;
+        rv.next();
+    }
 }
 
 rt.columnId = function (columnIndex) {
@@ -165,6 +170,7 @@ rt.handleUrl = function (item) {
 }
 
 rt.handleRedditData = function (data) {
+    rt.isGettingReddit = false;
     console.log(data); console.log(rv.subredditName);
     var articles = data.data.children;
     $.merge(rt.articles, articles);
@@ -183,6 +189,7 @@ rt.main = function () {
 
     $w.on("scroll.unveil resize.unveil lookup.unveil", rt.checkVisibility);
 
+    rt.isGettingReddit = true;
     rv.getItems(rt.handleRedditData);
 
     $("#title").html("<a href='" + rv.visitSubredditUrl + "'>" + rv.truncatedSubredditName + "</a> - redditile");
