@@ -187,11 +187,23 @@ rt.main = function () {
 
     $("#title").html("<a href='" + rv.visitSubredditUrl + "'>" + rv.truncatedSubredditName + "</a> - redditile");
 
-    $("#autoScroll").click(function () {
-        $('body').animate({scrollTop: 8000}, {
-            easing: "linear",
-            duration: 180000
-        });
+    var autoScrollButton = $("#autoScrollButton");
+    autoScrollButton.click(function () {
+        if (rt.anim === undefined) {
+            autoScrollButton.addClass('topRightHover');
+            var footerTop = $('#footer').offset().top;
+            rt.anim = $('body').animate({ scrollTop: footerTop }, {
+                easing: "linear",
+                duration: 50000,
+                complete: function () {
+
+                }
+            });
+        } else {
+            rt.anim.stop();
+            autoScrollButton.removeClass('topRightHover');
+            rt.anim = undefined;
+        }
     });
 }
 
