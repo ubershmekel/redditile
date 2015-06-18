@@ -180,7 +180,9 @@ rt.handleRedditData = function (data) {
         rt.handleUrl(item);
     };
 
-    rt.checkVisibility();
+    // give the renderer 1ms to organize the images
+    // so we don't load anything too early
+    setTimeout(rt.checkVisibility, 1);
 }
 
 rt.main = function () {
@@ -199,16 +201,17 @@ rt.main = function () {
         if (rt.anim === undefined) {
             autoScrollButton.addClass('topRightHover');
             var footerTop = $('#footer').offset().top;
+            var milliSecondsToAnimate = $('#timeToScroll').val() * 1000;
             rt.anim = $('body').animate({ scrollTop: footerTop }, {
                 easing: "linear",
-                duration: 50000,
+                duration: milliSecondsToAnimate,
                 complete: function () {
 
                 }
             });
         } else {
             rt.anim.stop();
-            autoScrollButton.removeClass('topRightHover');
+            //autoScrollButton.removeClass('topRightHover');
             rt.anim = undefined;
         }
     });

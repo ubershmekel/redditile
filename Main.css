@@ -60,6 +60,7 @@ a {
 
 .topRightHover {
     position: fixed;
-    top: 1em;
+    top: 3em;
     right: 1em;
+    z-index: 999; /* when auto-scrolling the button was unpressable at times because the href link was overriding */
 }
