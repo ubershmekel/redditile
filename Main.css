@@ -48,7 +48,7 @@ a {
 }
 
 .topButton {
-    float: right;
+    display: inline;
     margin: 4px;
 }
 
@@ -63,4 +63,9 @@ a {
     top: 3em;
     right: 1em;
     z-index: 999; /* when auto-scrolling the button was unpressable at times because the href link was overriding */
+}
+
+.right {
+    float: right;
+    font-size: 18px;
 }

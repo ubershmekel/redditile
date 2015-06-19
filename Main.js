@@ -67,7 +67,7 @@ rt.fixElementVisibility = function (item) {
 
 
     } else {
-        if (!isPlaceHolder && !isInView && !isPendingAjax) {
+        if (!isPlaceHolder && !isInView && !isPendingAjax && rt.unload) {
             // replace it with a placeholder
             $item.attr(rt.isPendingAjax, "true");
             var placeHolder = rt.placeHolderClones[url];
@@ -130,6 +130,7 @@ rt.balanceColumnHeight = function () {
 
 rt.checkVisibility = function () {
     var items = $('.item');
+    rt.unload = document.getElementById('unload').checked;
     for (var i = 0; i < items.length; i++) {
         rt.fixElementVisibility(items[i])
     }
