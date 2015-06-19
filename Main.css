@@ -69,3 +69,7 @@ a {
     float: right;
     font-size: 18px;
 }
+
+label {
+    cursor: pointer;
+}

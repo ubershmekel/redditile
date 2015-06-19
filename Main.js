@@ -136,8 +136,9 @@ rt.checkVisibility = function () {
     }
 
     rt.balanceColumnHeight();
-
-    if (!rt.isGettingReddit && rt.isVisible($('#footer'))) {
+    
+    var infiniteScroll = document.getElementById('infiniteScroll').checked;
+    if (infiniteScroll && !rt.isGettingReddit && rt.isVisible($('#footer'))) {
         rt.isGettingReddit = true;
         rv.next();
     }
