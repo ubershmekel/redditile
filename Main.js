@@ -47,13 +47,6 @@ rt.fixElementVisibility = function (item) {
                 $item.remove();
                 return;
             }
-            elem.error(function () {
-                // e.g. if we put something that's not an image in an <img> tag
-                console.log("Failed to load elem: ");
-                console.warn(elem);
-                elem.remove();
-            });
-
             var link = $('<a />', {
                 href: commentsUrl,
                 class: "item"
@@ -61,6 +54,20 @@ rt.fixElementVisibility = function (item) {
             link.append(elem);
             link.attr(rt.dataUrl, url);
             $item.replaceWith(link);
+            
+            elem.error(function () {
+                // e.g. if we put something that's not an image in an <img> tag
+                console.log("Failed to load elem: ");
+                console.warn(elem);
+                elem.remove();
+                
+                // Make sure it doesn't show up again. E.g.
+                // this can happen when the embed happens when the
+                // element is off screen and looks glitchy.
+                link.remove();
+                $item.remove();
+            });
+
         }
         $item.attr(rt.isPendingAjax, "true");
         embedit.embed(url, emb);

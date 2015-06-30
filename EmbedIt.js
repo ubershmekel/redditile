@@ -7,6 +7,9 @@ embedit.video = function (webmUrl, mp4Url) {
     // on the <video> tag :/
     
     var video = $('<video autoplay loop />');
+    video.append($('<source/>').attr('src', webmUrl));
+    video.append($('<source/>').attr('src', mp4Url));
+    return video;
     //video.attr("src", urls[0]);
     
     var url;
@@ -47,10 +50,11 @@ embedit.convertors = [
     },
     {
         name: "imgurGifv",
-        detect: /imgur\.com.*(gifv|mp4|webm)/,
+        detect: /imgur\.com.*(gif|gifv|mp4|webm)/,
         convert: function (url, embedFunc) {
-            var webmUrl = url.replace(/\.gifv/i, '.webm');
-            var mp4Url = url.replace(/\.gifv/i, '.mp4');
+            var no_extension = url.replace(/\.\w+$/, '')
+            var webmUrl = no_extension + '.webm'
+            var mp4Url = no_extension + '.mp4';
             embedFunc(embedit.video(webmUrl, mp4Url));
             return true;
         }
