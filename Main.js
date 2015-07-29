@@ -30,6 +30,10 @@ rt.isVisible = function (e) {
     return eb >= wt - th && et <= wb + th;
 };
 
+rt.removeItemButtonClick = function() {
+    $(this).parent().remove();
+    rt.checkVisibility();
+}
 
 rt.fixElementVisibility = function (item) {
     var $item = $(item);
@@ -48,12 +52,21 @@ rt.fixElementVisibility = function (item) {
                 return;
             }
             var link = $('<a />', {
-                href: commentsUrl,
-                class: "item"
+                href: commentsUrl
             });
             link.append(elem);
-            link.attr(rt.dataUrl, url);
-            $item.replaceWith(link);
+            var div = $('<div/>', {
+                "class": "item"
+            });
+            var button = $("<button/>", {
+                "text": "X",
+                "class": "deleteButton"
+            });
+            button.click(rt.removeItemButtonClick);
+            div.append(button);
+            div.append(link);
+            div.attr(rt.dataUrl, url);
+            $item.replaceWith(div);
             
             elem.error(function () {
                 // e.g. if we put something that's not an image in an <img> tag
